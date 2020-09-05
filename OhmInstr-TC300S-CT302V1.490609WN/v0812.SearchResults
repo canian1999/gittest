@@ -1,0 +1,43 @@
+---- uiAcVolVal Matches (52 in 3 files) ----
+Ctrl.h:unsigned int uiAcVolVal;
+Main.c:unsigned int uiAcVolVal;
+Main.c:unsigned int uiAcVolValPre;
+Main.c:		uiAcVolVal = 0;
+Main.c:        uiAcVolValPre= 0;
+Main.c:		uiAcVolVal = uiGaugeACV(ACV_SAMP_CH); //测量交流电压,执行一次约26ms;
+Main.c:		if(uiAcVolValPre==0)
+Main.c:		   uiAcVolValPre = 220;
+Main.c:		   uiAcVolVal = uiAcVolValPre*0.95+uiAcVolVal*0.05;
+Main.c:		   uiAcVolVal = uiAcVolValPre*0.95+uiAcVolVal*0.05;
+Main.c:		   uiAcVolValPre = uiAcVolVal;
+Main.c:    uiDispBuff[6] = uiAcVolVal;              //交流电压
+Main.c:	if((uiAcVolVal >= 284)||(uiAcVolVal < 150))
+Main.c:        if(uiAcVolVal >= 284)
+Main.c:	else if((uiAcVolVal < 284)&&(uiAcVolVal >= 150)) //取消过压、欠压报警
+Main.c:    if((uiAcVolVal >= 284)||(uiAcVolVal < 150))    //170
+Main.c:	    if((uiAcVolVal >= 300)||(uiAcVolVal < 140))
+Main.c:	else if((uiAcVolVal< 284)&&(uiAcVolVal >= 150))  //175,电压正常后3分钟恢复，取消保护
+Main.txt:;;;3200   	if((uiAcVolVal >= 284)||(uiAcVolVal < 176))
+Main.txt:000782  6f51              LDR      r1,[r2,#0x74]  ; uiAcVolVal
+Main.txt:;;;3204           if(uiAcVolVal >= 284)
+Main.txt:;;;3209   	else if((uiAcVolVal < 284)&&(uiAcVolVal >= 176)) //取消过压、欠压报警
+Main.txt:;;;3216       if((uiAcVolVal >= 284)||(uiAcVolVal < 176))    //170
+Main.txt:;;;3218   	    if((uiAcVolVal >= 300)||(uiAcVolVal < 150))
+Main.txt:;;;3228   	else if((uiAcVolVal< 284)&&(uiAcVolVal >= 176))  //175,电压正常后3分钟恢复，取消保护
+Main.txt:;;;1254   		uiAcVolVal = uiGaugeACV(ACV_SAMP_CH); //测量交流电压,执行一次约26ms;
+Main.txt:;;;1255   		if((uiAcVolValPre==0)&&(uiAcVolVal>180))
+Main.txt:0007ea  6760              STR      r0,[r4,#0x74]  ; uiAcVolVal
+Main.txt:0007ec  6fa1              LDR      r1,[r4,#0x78]  ; uiAcVolValPre
+Main.txt:;;;1257   		   uiAcVolValPre = uiAcVolVal;
+Main.txt:;;;1261   		   uiAcVolVal = uiAcVolValPre*0.95+uiAcVolVal*0.05;
+Main.txt:000846  6760              STR      r0,[r4,#0x74]  ; uiAcVolVal
+Main.txt:000848  67a0              STR      r0,[r4,#0x78]         ;1257  ; uiAcVolValPre
+Main.txt:;;;1262   		   uiAcVolValPre = uiAcVolVal;
+Main.txt:;;;2779       uiDispBuff[6] = uiAcVolVal;              //交流电压
+Main.txt:000dfa  6f50              LDR      r0,[r2,#0x74]  ; uiAcVolVal
+Main.txt:;;;403    		uiAcVolVal = 0;
+Main.txt:;;;404            uiAcVolValPre= 0;
+Main.txt:001f18  6706              STR      r6,[r0,#0x70]         ;404  ; uiAcVolVal
+Main.txt:001f1a  6746              STR      r6,[r0,#0x74]         ;405  ; uiAcVolValPre
+Main.txt:                  uiAcVolVal
+Main.txt:                  uiAcVolValPre

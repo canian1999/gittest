@@ -1,0 +1,19 @@
+--cpu Cortex-M3
+".\stm32f10x.o"
+".\main.o"
+"C:\Keil\ARM\RV31\LIB\ST\STM32F10xR.LIB"
+".\stm32f10x_it.o"
+".\system.o"
+".\lcd2010.o"
+".\key2010.o"
+".\iic.o"
+".\ds18b20.o"
+".\rtc.o"
+".\adc.o"
+".\yuyin.o"
+".\spi.o"
+".\sx1276_7_8.o"
+--strict --scatter ".\OhmInstr.sct"
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\OhmInstr.map" -o .\OhmInstr.axf

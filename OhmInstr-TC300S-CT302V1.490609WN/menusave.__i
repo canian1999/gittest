@@ -1,0 +1,1 @@
+-c --device DARMSTM -g -O3 --apcs=interwork --asm --interleave -I "C:\Keil\ARM\INC\ST\STM32F10x" -o "menusave.o" --omf_browse "menusave.crf" --depend "menusave.d" "MenuSave.c"

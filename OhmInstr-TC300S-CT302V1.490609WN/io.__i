@@ -1,0 +1,1 @@
+-c --device DARMSTM -g -O3 --apcs=interwork --asm --interleave -I "C:\Keil\ARM\INC\ST\STM32F10x" -o "io.o" --omf_browse "io.crf" --depend "io.d" "io.c"

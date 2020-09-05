@@ -1,0 +1,1 @@
+-c --device DARMSTM -g -O3 --apcs=interwork --asm --interleave -I "C:\Keil\ARM\INC\ST\STM32F10x" -o "menusetpar.o" --omf_browse "menusetpar.crf" --depend "menusetpar.d" "MenuSetPar.c"

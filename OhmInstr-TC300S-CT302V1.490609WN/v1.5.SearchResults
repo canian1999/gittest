@@ -1,0 +1,31 @@
+---- uiTotalRunHour Matches (30 in 3 files) ----
+Ctrl.h:unsigned int   uiTotalRunHour;
+Main.c:unsigned int   uiTotalRunHour;
+Main.c:		uiTotalRunHour = 0;
+Main.c:					uiTotalRunHour++;
+Main.c:				    vdSaveRunDatExEep(ucKaofangNum,uiTotalRunHour-1);
+Main.c:  					IICdatt=uiTotalRunHour;
+Main.c:					if((uiDryTempVal > 600)||(uiTotalRunHour > 100))
+Main.c:                        	ucSegCntTime++;    //会清零，受控，而 uiTotalRunHour 自运行开始不会清零，不受控
+Main.c:				uiTotalRunHour = 0;
+Main.c:	uiDispBuff[5] = uiTotalRunHour;              //运行总时间
+Main.c:	if( uiTotalRunHour <= 200 ) 
+Main.txt:;;;3307   	if( uiTotalRunHour <= 200 ) 
+Main.txt:000490  6d5a              LDR      r2,[r3,#0x54]  ; uiTotalRunHour
+Main.txt:;;;2751   	uiDispBuff[5] = uiTotalRunHour;              //运行总时间
+Main.txt:000caa  f8de0054          LDR      r0,[lr,#0x54]         ;2751  ; uiTotalRunHour
+Main.txt:;;;1543   				uiTotalRunHour = 0;
+Main.txt:001b88  6565              STR      r5,[r4,#0x54]         ;1544  ; uiTotalRunHour
+Main.txt:;;;403    		uiTotalRunHour = 0;
+Main.txt:0020cc  6537              STR      r7,[r6,#0x50]         ;404  ; uiTotalRunHour
+Main.txt:;;;658    					uiTotalRunHour++;
+Main.txt:00242c  6d68              LDR      r0,[r5,#0x54]  ; uiTotalRunHour
+Main.txt:;;;661    				    vdSaveRunDatExEep(ucKaofangNum,uiTotalRunHour-1);
+Main.txt:002430  6568              STR      r0,[r5,#0x54]  ; uiTotalRunHour
+Main.txt:;;;665    //	                eeprom_write_byte((uint8_t *)(IEEP_MEIKAO_TOTALT + ucKaofangNum),(unsigned char)uiTotalRunHour);
+Main.txt:;;;667      					IICdatt=uiTotalRunHour;
+Main.txt:00244c  6d68              LDR      r0,[r5,#0x54]  ; uiTotalRunHour
+Main.txt:;;;671    					if((uiDryTempVal > 600)||(uiTotalRunHour > 100))
+Main.txt:002466  6d68              LDR      r0,[r5,#0x54]  ; uiTotalRunHour
+Main.txt:;;;710                            	ucSegCntTime++;    //会清零，受控，而 uiTotalRunHour 自运行开始不会清零，不受控
+Main.txt:                  uiTotalRunHour

@@ -1,0 +1,1 @@
+-c --device DARMSTM -g -O3 --apcs=interwork --asm --interleave -I "C:\Keil\ARM\INC\ST\STM32F10x" -o "charlib.o" --omf_browse "charlib.crf" --depend "charlib.d" "CharLib.C"

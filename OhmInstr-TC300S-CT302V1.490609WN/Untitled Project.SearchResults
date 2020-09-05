@@ -1,0 +1,4 @@
+---- ACC_SAMP_CH1 Matches (3 in 3 files) ----
+Macro.h:	#define ACC_SAMP_CH1 ADC_Channel_11
+Main.c:		uiAcCurVal_A = uiGaugeACC(ACC_SAMP_CH1);   //测量交流电流,执行一次约26ms;
+Main.txt:;;;1196   		uiAcCurVal_A = uiGaugeACC(ACC_SAMP_CH1);   //测量交流电流,执行一次约26ms;

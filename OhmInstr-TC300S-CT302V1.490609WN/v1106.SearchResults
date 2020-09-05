@@ -1,0 +1,46 @@
+---- 温度 Matches (46 in 13 files) ----
+Ctrl.h://目标温度计算用有关变量
+Ctrl.h://标志风门在温度超出范围时风门不动作计时
+Ds18b20.c://启动温度转换
+Ds18b20.c://读取温度转换值
+Ds18b20.c:	if((a & 0xF000) == 0)				// 正温度		
+Ds18b20.c:	else if((a & 0xF000) == 0xF000)		// 负温度
+Ds18b20.c:* Description    : 读取传感器值，启动传感器温度转换
+Ds18b20.h:#define  StartConvert    0x44  //开始温度转换，在温度转换期间总线上输出0，转换结束后输出1
+Ds18b20.txt:;;;122    //启动温度转换
+Ds18b20.txt:;;;138    //读取温度转换值
+Ds18b20.txt:;;;169    	if((a & 0xF000) == 0)				// 正温度		
+Ds18b20.txt:;;;171    	else if((a & 0xF000) == 0xF000)		// 负温度
+Lcd2010.c:	//干球温度：高、中、低
+Lcd2010.c:	//湿球温度：高、中、低
+Lcd2010.txt:;;;698    	//干球温度：高、中、低
+Lcd2010.txt:;;;703    	//湿球温度：高、中、低
+Main.c://目标温度计算用有关变量
+Main.c:unsigned int  WetTempValCtrT,WetTempValCtr,WetBulbSuperscale;    //变频器湿球温度目标值，相当于LCD显示的湿球温度值
+Main.c:int uiTemp_filter_value;//温度滤波用
+Main.c://标志风门在温度超出范围时风门不动作计时
+Main.c:		flgRdTmp  = TRUE;              //启动温度转换
+Main.c:					//温度滤波
+Main.c:	//规则1：若小于设定温度，则启动
+Main.c:	//规则2：若高于设定温度，则停止	
+Main.c:	//规则3：升温，到目标温度，则停止；
+Main.c:	//规则4：降温，到目标温度，则启动；
+Main.c:    //干温报警，温度超出2度10分钟
+Main.c:    //湿度报警，温度超出1度10分钟
+Main.txt:;;;925    	//规则1：若小于设定温度，则启动
+Main.txt:;;;935    	//规则2：若高于设定温度，则停止	
+Main.txt:;;;945    	//规则3：升温，到目标温度，则停止；
+Main.txt:;;;958    	//规则4：降温，到目标温度，则启动；
+Main.txt:;;;3386       //湿度报警，温度超出1度10分钟
+Main.txt:;;;3335       //干温报警，温度超出2度10分钟
+Main.txt:;;;449    		flgRdTmp  = TRUE;              //启动温度转换
+Main.txt:;;;550    					//温度滤波
+Menusetpar.txt:;;;130      // 绕组温度显示
+Menusetpar.txt:;;;44       LCD_Print("绕组温度",48,96);
+Print.txt:;;;33       printf("绕组温度：\r");
+Stm32f10x_it.c:				    flgRdTmp  = TRUE;     //启动温度转换
+Stm32f10x_it.txt:;;;256    				    flgRdTmp  = TRUE;     //启动温度转换
+Yuyin.h:	#define   WET_LOW         0x1F    //31:湿球温度偏低
+Yuyin.h:    #define   WET_HIGH        0x1E    //30:湿球温度偏高
+Yuyin.h:	#define   DRY_LOW         0x1D    //29:干球温度偏低
+Yuyin.h:	#define   DRY_HIGH        0x1C    //28:干球温度偏高

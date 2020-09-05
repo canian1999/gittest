@@ -1,0 +1,30 @@
+*** Creating Trace Output File 'OhmInstr.tra' Ok.
+### Preparing for ADS-LD.
+### Creating ADS-LD Command Line
+### List of Objects: adding '"stm32f10x.o"'
+### List of Objects: adding '"main.o"'
+### List of Objects: adding '"C:\Keil\ARM\RV31\LIB\ST\STM32F10xR.LIB"'
+### List of Objects: adding '"stm32f10x_it.o"'
+### List of Objects: adding '"system.o"'
+### List of Objects: adding '"lcd2010.o"'
+### List of Objects: adding '"key2010.o"'
+### List of Objects: adding '"iic.o"'
+### List of Objects: adding '"ds18b20.o"'
+### List of Objects: adding '"rtc.o"'
+### List of Objects: adding '"adc.o"'
+### List of Objects: adding '"yuyin.o"'
+### ADS-LD Command completed:
+--device DARMSTM "stm32f10x.o" "main.o" "C:\Keil\ARM\RV31\LIB\ST\STM32F10xR.LIB" "stm32f10x_it.o" "system.o" "lcd2010.o" "key2010.o" "iic.o" "ds18b20.o" "rtc.o" "adc.o" "yuyin.o" --strict --scatter "OhmInstr.sct" 
+--autoat --summary_stderr --info summarysizes --map --xref --callgraph --symbols 
+--info sizes --info totals --info unused --info veneers 
+ --list ".\OhmInstr.map" -o "OhmInstr.axf"### Preparing Environment (PrepEnvAds)
+### ADS-LD Output File: 'OhmInstr.axf'
+### ADS-LD Command File: 'OhmInstr.lnp'
+### Checking for dirty Components...
+### Creating CmdFile 'OhmInstr.lnp', Handle=0x00000638
+### Writing '.lnp' file
+### ADS-LD Command file 'OhmInstr.lnp' is ready.
+### ADS-LD: About to start ADS-LD Thread.
+### ADS-LD: executed with 0 errors
+### Updating obj list
+### LDADS_file() completed.

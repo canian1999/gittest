@@ -22,6 +22,8 @@
 	#define ACC_SAMP_CH2 ADC_Channel_12
 	#define ACV_SAMP_CoalMotorOverload ADC_Channel_13
 	#define ACV_SAMP_FengmenCtrMod ADC_Channel_2
+	#define ACV_SAMP_FengmenOverload ADC_Channel_1	//风门电流来判断运行状态
+
 
 	 //工作模式定义
    #define  STOP_MODE    0   //手动模式，待机模式
@@ -70,6 +72,8 @@
 	#define JIAMEIJI_FORWARD  {GPIOC->BSRR |= GPIO_Pin_13; GPIOC->BRR |= GPIO_Pin_10;}
 	#define JIAMEIJI_BACK     {GPIOC->BSRR |= GPIO_Pin_13; GPIOC->BSRR |= GPIO_Pin_10;}
 	#define JIAMEIJI_STOP     {GPIOC->BRR  |= GPIO_Pin_13; GPIOC->BRR |= GPIO_Pin_10;}
+//		#define JIAMEIJI_FORWARD  {GPIOC->BSRR |= GPIO_Pin_13; GPIOC->BSRR |= GPIO_Pin_10;}
+//		#define JIAMEIJI_STOP     {GPIOC->BRR  |= GPIO_Pin_13; GPIOC->BRR |= GPIO_Pin_10;}
  
 
    #define FAN_RUN  GPIOA->BSRR |= GPIO_Pin_8  //PA7
@@ -80,14 +84,20 @@
    #define FENGJI_STOP GPIOD->BRR |= GPIO_Pin_2  //PC13
 
 	 //风门电机
-   #define    WIND_OPEN     {GPIOA->BSRR |= GPIO_Pin_4; GPIOA->BSRR |= GPIO_Pin_3;}
-   #define    WIND_CLOS     {GPIOA->BRR |= GPIO_Pin_4; GPIOA->BSRR |= GPIO_Pin_3;}
+//   #define    WIND_OPEN     {GPIOA->BSRR |= GPIO_Pin_4; GPIOA->BSRR |= GPIO_Pin_3;}
+//   #define    WIND_CLOS     {GPIOA->BRR |= GPIO_Pin_4; GPIOA->BSRR |= GPIO_Pin_3;}
+
+	#define    WIND_OPEN     {GPIOA->BRR |= GPIO_Pin_4; GPIOB->BSRR |= GPIO_Pin_3;}
+	#define    WIND_CLOS     {GPIOA->BSRR |= GPIO_Pin_4; GPIOB->BRR |= GPIO_Pin_3;}
 
 
-	#define    WIND_STOP    {GPIOA->BRR |= GPIO_Pin_4;GPIOA->BRR |= GPIO_Pin_3;}
+	#define    WIND_STOP    {GPIOA->BRR |= GPIO_Pin_4;GPIOB->BRR |= GPIO_Pin_3;}
 
 	#define    WIND_RUN_TIME   50
 	#define    FENGJI_DELAY    8
+	
+	#define		uiAcCurVal_Gaodi	85
+	#define		uiAcCurVal_Overload	75
 
 
 #endif

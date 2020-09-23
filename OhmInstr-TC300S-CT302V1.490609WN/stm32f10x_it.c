@@ -21,6 +21,7 @@
 #include "key2010.h"
 #include "lcd2010.h"
 #include "macro.h"
+#include "system.h"
 
 unsigned int LCDLED_RST = 0;
 
@@ -53,7 +54,6 @@ extern unsigned char ucTmpDispGistCnt;    //控制显示切换时间
 extern unsigned char flgMainSensor;  //0：以上棚为主传感器；1：以下棚为主传感器
 extern unsigned char flgFmNonCnt;
 extern unsigned int  uiFmNonCnt; 
-extern unsigned char flgXunHuanGaoDiCnt;
 extern unsigned char flgCycleTimCnt;
 extern unsigned int i16CtrAmount0;
 extern unsigned int i16CtrAmount1;
@@ -70,6 +70,7 @@ extern volatile unsigned int u16CoalMotorOverLoadFlag;  //风门电机运行计时
 extern volatile unsigned char flgCoalMotorRun;   //标志进风电机正在运行; 
 extern volatile unsigned int u16CoalMotorSecCntPre;  //风门电机运行计时
 extern volatile unsigned int i16CoalMotorIntervalSecCnt;
+extern unsigned char vdGetFengmenCtrModStart;
 
 unsigned int u16CoalMotorOverLoadFresh = 0;
 unsigned int u16CoalMotorOverLoadCnt = 0;
@@ -92,6 +93,11 @@ extern unsigned int u16MasterAddressSet;
 
 extern unsigned int u16SlaveAddress;
 extern unsigned int u16SlaveAddressSet;
+
+
+extern volatile unsigned int FenmenActMore1dot5RunFlag;
+extern volatile unsigned int FenmenActLeSS1RunFlag;
+
 extern u8 GetRFFrame_1278(void);
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -225,7 +231,7 @@ void SysTickHandler(void)
 /****100ms******************************************/
 	   if(uiCnt10ms >= 10)		//该if内100ms进一次
 	   {
-    		 REVERSE_RESETCPU;  //
+			 			REVERSE_RESETCPU;  //
 		     uiCnt10ms = 0;
 			 if(LCDLED_RST > 2)		//无传感器信号LCD复位
 			 {
@@ -253,6 +259,10 @@ void SysTickHandler(void)
 		         }
 			     uiCnt1000ms=0;
 		         ucSecCnt++;//计秒
+					if(flgXunHuanGaoDiPreDelay>1)
+					 flgXunHuanGaoDiPreDelay --;
+					if(ucFengjiLackPhCnt>1)
+						ucFengjiLackPhCnt--;
 				 if(ucSecCnt >= 60)  //分钟
 				 {
 					ucSecCnt = 0;
@@ -275,42 +285,43 @@ void SysTickHandler(void)
 				}
 			    else if(1 == (ucSecCnt%2))//2秒执行一次
 				{
-					if(1 == flgCoalFanOn)
-					{
-							u16FanonSecCnt = u16FanonSecCnt + 2;
-							if(u16FanonSecCnt >= 120)				//两分钟
-							{
+					 if(1 == flgCoalFanOn)
+					 {
+					      u16FanonSecCnt = u16FanonSecCnt + 2;
+						  if(u16FanonSecCnt >= 120)				//两分钟
+						  {
 								u16FanonSecCnt = 120;
-							}
-					}
-								else
-								{
-								 u16FanonSecCnt = 0;
-								}
+						  }
+					 }
+					 else
+					 {
+						 u16FanonSecCnt = 0;
+					 }
 		
-								if(u16FanonSecCnt >= 120)					
-								{
-									 u16CoalMotorIntevalCnt = u16CoalMotorIntevalCnt + 2;
-								}
-							
-								if(u16CoalMotorIntevalCnt >= 600)				//
-								{
-									u16CoalMotorIntevalCnt = 0;
-									u16MotorCnt = i16CtrAmount0 * 60;
-									if(i16CtrAmount0 >= 9)
-										u16MotorCnt = 610;
-								}
+					 if(u16FanonSecCnt >= 120)					
+					 {
+					 	   u16CoalMotorIntevalCnt = u16CoalMotorIntevalCnt + 2;
+					 }
+						
+					 if(u16CoalMotorIntevalCnt >= 600)				//
+					 {
+						   u16CoalMotorIntevalCnt = 0;
+						   u16MotorCnt = i16CtrAmount0 * 60;
+						   if(i16CtrAmount0 >= 9)
+							 u16MotorCnt = 610;
+					 }
 
-								u16MotorCnt = u16MotorCnt - 2;
-								if(u16MotorCnt>=2)
-								{
-									JIAMEIJI_FORWARD;
-								}
-								else
-								{
-									JIAMEIJI_STOP;
-									u16MotorCnt = 3;
-								}
+
+					 u16MotorCnt = u16MotorCnt - 2;
+					 if(u16MotorCnt>=2)
+					 {
+						  JIAMEIJI_FORWARD;
+					 }
+					 else
+					 {
+						  JIAMEIJI_STOP;
+					 	  u16MotorCnt = 3;
+					 }
 				}
 				else 
 				{     
@@ -363,6 +374,7 @@ void SysTickHandler(void)
 		      else if((uiCnt1000ms == 4)||(uiCnt1000ms == 8))
 		      {
 			      flgDispBrush = TRUE;
+				  	vdGetFengmenCtrModFlag();
 			    }
 					else if((uiCnt1000ms == 2))
 					{
@@ -375,7 +387,7 @@ void SysTickHandler(void)
 								 if(GetRFFrame_1278())
 									u8Sx1278SendFlag = 1;
 							}
-						SysTime_MicroSec++;
+						            SysTime_MicroSec++;
 									if(SysTime_MicroSec >=4)
 											SysTime_MicroSec = 4;
 					 }
@@ -387,8 +399,6 @@ void SysTickHandler(void)
 					 if(flgKeyOk == FALSE)
 					 KeyScan();
 
-					 flgXunHuanGaoDiCntPre = flgXunHuanGaoDiCnt;
-					 flgXunHuanGaoDiCnt = 0;
 					 /*控制进风门电机的运行时间*/
 					 if(flgWindRun ==0x01)		//标志风门电机正在运转；
 					 {
@@ -398,15 +408,12 @@ void SysTickHandler(void)
 						 {
 							 WIND_STOP;
 							 flgWindRun = 0x00;
+							 FenmenActMore1dot5RunFlag = 0; //执行完不再检测
+							 FenmenActLeSS1RunFlag     = 0; //执行完不再检测
 						 }
 					 } 			 
 				}
 			}
-	}
-	else
-	{
-		if(0== GPIO_ReadInputDataBit(GPIOC,GPIO_Pin_4))
-       flgXunHuanGaoDiCnt++;	
 	}
 }
 /*******************************************************************************

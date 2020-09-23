@@ -23,6 +23,7 @@
 
 extern unsigned int uiGaugeACV(unsigned char ch);
 extern unsigned int uiGaugeACC(unsigned char ch);
+extern unsigned int uiGaugeDCC(unsigned char ch);
 extern void ADCInit(void);
 extern void CS5532_Sample(void);
 extern void CS5532_Init(void);

@@ -1,42 +1,14 @@
----- uiTempBuff Matches (56 in 1 files) ----
-Main.c:unsigned int   uiTempBuff[4];
-Main.c:	  uiTempBuff[i] = 0;
-Main.c:    (void)(ucStartRdTmp(uiTempBuff));
-Main.c:		uiDryTempVal =	uiTempBuff[DNDRY]; //主传感器
-Main.c:		uiWetTempVal =	uiTempBuff[DNWET];
-Main.c:	    uiDispBuff[0] = uiTempBuff[DNDRY];		 //显示主传感器
-Main.c:		uiDispBuff[1] = uiTempBuff[DNWET];
-Main.c:    	uiDryTempVal =	uiTempBuff[UPDRY]; //主传感器
-Main.c:	    uiWetTempVal =	uiTempBuff[UPWET];
-Main.c:		uiDispBuff[0] = uiTempBuff[UPDRY];		 //显示主传感器
-Main.c:		uiDispBuff[1] = uiTempBuff[UPWET];
-Main.c:         if(!ucStartRdTmp(uiTempBuff))
-Main.c:					uiDryTempVal =  uiTempBuff[DNDRY]; //主传感器
-Main.c:					uiWetTempVal =  uiTempBuff[DNWET];
-Main.c:					uiAuxDryTempVal =  uiTempBuff[UPDRY]; //辅传感器
-Main.c:					uiAuxWetTempVal =  uiTempBuff[UPWET];
-Main.c:					uiTempBuff_filter[DNDRY] = uiTempBuff[DNDRY];
-Main.c:					uiTempBuff_filter[DNWET] = uiTempBuff[DNWET];
-Main.c:					uiTempBuff_filter[UPDRY] = uiTempBuff[UPDRY];
-Main.c:					uiTempBuff_filter[UPWET] = uiTempBuff[UPWET];
-Main.c:					uiTemp_filter_value = uiTempBuff_filter[DNDRY]+uiTempBuff_filter[DNWET]+uiTempBuff_filter[UPDRY]+uiTempBuff_filter[UPWET]-uiTempBuff[DNDRY]-uiTempBuff[DNWET]-uiTempBuff[UPDRY]-uiTempBuff[UPWET];
-Main.c:		            	uiDryTempVal =  uiTempBuff[DNDRY]; //主传感器
-Main.c:		            	uiWetTempVal =  uiTempBuff[DNWET];
-Main.c:						uiAuxDryTempVal =  uiTempBuff[UPDRY]; //辅传感器
-Main.c:			            uiAuxWetTempVal =  uiTempBuff[UPWET];
-Main.c:					uiTempBuff_filter[DNDRY] = uiTempBuff[DNDRY];
-Main.c:					uiTempBuff_filter[DNWET] = uiTempBuff[DNWET];
-Main.c:					uiTempBuff_filter[UPDRY] = uiTempBuff[UPDRY];
-Main.c:					uiTempBuff_filter[UPWET] = uiTempBuff[UPWET];
-Main.c:				    uiTemp_filter_value = uiTempBuff_filter[DNDRY]+uiTempBuff_filter[DNWET]+uiTempBuff_filter[UPDRY]+uiTempBuff_filter[UPWET]-uiTempBuff[DNDRY]-uiTempBuff[DNWET]-uiTempBuff[UPDRY]-uiTempBuff[UPWET];
-Main.c:					    uiDryTempVal =  uiTempBuff[UPDRY]; //主传感器
-Main.c:			            uiWetTempVal =  uiTempBuff[UPWET];
-Main.c:						uiAuxDryTempVal =  uiTempBuff[DNDRY]; //辅传感器
-Main.c:			            uiAuxWetTempVal =  uiTempBuff[DNWET];
-Main.c:					uiTempBuff_filter[DNDRY] = uiTempBuff[DNDRY];
-Main.c:					uiTempBuff_filter[DNWET] = uiTempBuff[DNWET];
-Main.c:					uiTempBuff_filter[UPDRY] = uiTempBuff[UPDRY];
-Main.c:					uiTempBuff_filter[UPWET] = uiTempBuff[UPWET];
-Main.c:		  if(uiTempBuff[DNDRY]>40&&uiTempBuff[DNWET]>40&&uiTempBuff[UPDRY]>40&&uiTempBuff[UPWET]>40)
-Main.c:		if((850 == uiTempBuff[DNDRY])||(850 == uiTempBuff[DNWET])||(850 == uiTempBuff[UPDRY])||(850 == uiTempBuff[UPWET]))
-Main.c:	else if(((850 == uiTempBuff[DNDRY])||(850 == uiTempBuff[DNWET])||(850 == uiTempBuff[UPDRY])||(850 == uiTempBuff[UPWET]))
+---- u8DS18B20lowFlag Matches (13 in 2 files) ----
+Ds18b20.c:u8 u8DS18B20lowFlag = 0;
+Ds18b20.c:					u8DS18B20lowFlag = 1;
+Ds18b20.c:					u8DS18B20lowFlag = 0;
+Ds18b20.c:		if(1 == u8DS18B20lowFlag)
+Ds18b20.c:		u8DS18B20lowFlag = 0;
+Ds18b20.c:		 if(1 == u8DS18B20lowFlag)
+Ds18b20.c:		 u8DS18B20lowFlag = 0;
+Ds18b20.c:		 if(1 == u8DS18B20lowFlag)
+Ds18b20.c:		 u8DS18B20lowFlag = 0;
+Ds18b20.c:		 if(1 == u8DS18B20lowFlag)
+Ds18b20.c:		 u8DS18B20lowFlag = 0;
+Main.c:extern u8 u8DS18B20lowFlag;
+Main.c:  u8DS18B20lowFlag = 0;

@@ -92,9 +92,9 @@ void RTCInit(void)
     RTC_Configuration();
 
     //≥ı º ±º‰
-    TimeSet.tm_year=2019-1900;
-    TimeSet.tm_mon = 5;
-    TimeSet.tm_mday=15;
+    TimeSet.tm_year=2020-1900;
+    TimeSet.tm_mon = 4;
+    TimeSet.tm_mday=9;
     TimeSet.tm_hour=0;
     TimeSet.tm_min=0;
     TimeSet.tm_sec=0;

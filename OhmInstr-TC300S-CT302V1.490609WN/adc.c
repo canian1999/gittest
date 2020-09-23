@@ -90,3 +90,27 @@ unsigned int uiGaugeACC(unsigned char ch)
   return reval;
 }
 
+unsigned int uiGaugeDCC(unsigned char ch)
+{  
+  int i;
+  u32 adc_result,reval;
+  u32 adc_max=0;
+  reval =0;
+  adc_result = 0;
+
+  ADC_RegularChannelConfig(ADC1, ch, 1, ADC_SampleTime_41Cycles5);
+  _delay_us(800);
+  for(i=0;i<5;i++)
+  {
+	while(RESET==ADC_GetFlagStatus(ADC1,ADC_FLAG_EOC));	//等待转换完成
+		adc_result=ADC1->DR;
+  	ADC_ClearFlag(ADC1,ADC_FLAG_EOC);					//清除标志位
+	if(adc_result>adc_max)
+	   adc_max=adc_result;
+	_delay_us(40);
+  }
+  reval =adc_max/6;
+  if(reval<=10)reval=0;//零漂	                                                                                                                  
+  return reval;
+}
+

@@ -63,7 +63,6 @@ volatile unsigned char ucMaxKaoNum;
 volatile unsigned char ucMaxTotalHour;
 volatile unsigned char u8JiaMeiJiCnt;
 //风机高低速
-volatile unsigned char flgXunHuanGaoDiCnt;
 volatile unsigned char flgXunHuanGaoDiCntPre;
 
 volatile unsigned char flgCycleTimCnt;
@@ -377,6 +376,11 @@ volatile unsigned int i16CtrAmount3Pre = 8;
 unsigned int u16CoalMotorOverLoad;
 unsigned int u16CoalMotorStopFlag = 1;
 
+volatile unsigned int FenmenActLeSS1Flag = 0;
+volatile unsigned int FenmenActLeSS1RunFlag = 0;
+volatile unsigned int FenmenActMore1dot5Flag = 0;
+volatile unsigned int FenmenActMore1dot5RunFlag = 0;
+
 
 //SX1278
 u8 mode;//lora--1/FSK--0
@@ -391,10 +395,16 @@ u8 u8Sx1278SendFlag;
 u8  sx1276_7_8SlaveAddress = 0x01;
 u8 Frame_send_report[16] ;
 
+u8 SPItest1 = 1;
+
 unsigned char TemperSensorErrCnt = 0;
 unsigned char TemperSensorErrFlag = 0;
 unsigned int u16Sx1278FrameTemp = 0;
 unsigned int u16Sx1278FrameCrcCheck = 0;
+
+unsigned char vdGetFengmenCtrModStart = 0;
+unsigned int ACV_SAMP_FengmenCur;	//用于记录风门电流做判断
+unsigned int  uiWindCntTest;
 
 
 unsigned char ucReadKey(void);
@@ -402,6 +412,11 @@ unsigned char uiACProc(void);
 extern unsigned int u16MotorCnt;
 extern unsigned int u16CoalMotorIntevalCnt;
 extern unsigned int LCDLED_RST;
+extern u8 u8DS18B20lowFlag;
+extern u8 u8DS18B20lowErrCnt_0;
+extern u8 u8DS18B20lowErrCnt_1;
+extern u8 u8DS18B20lowErrCnt_2;
+extern u8 u8DS18B20lowErrCnt_3;
 
 void vdFillDispBuff(void);
 void vdDeciToBcd(void);
@@ -466,12 +481,18 @@ int main(void)
   FENGJI_STOP;
   FAN_RUN;
   DS18B20Flag = 0;
+  u8DS18B20lowFlag = 0;
+  u8DS18B20lowErrCnt_0 = 0;
+  u8DS18B20lowErrCnt_1 = 0;
+  u8DS18B20lowErrCnt_2 = 0;
+  u8DS18B20lowErrCnt_3 = 0;
 
   u16MotorCnt = 1;
   u16CoalMotorIntevalCnt = 120;
   flgCoalFanOn = 1;
   DS18B20_Timer_Hour = 0;
   LCDLED_RST = 0;
+	vdGetFengmenCtrModStart = 0;//启动时不做风门判断
 
   IICaddr= CtrAmount0;
   WordFrom24C();
@@ -512,16 +533,21 @@ int main(void)
 
   u16CoalMotorOverLoadFlag = 0;  
 
-/*
-  uiTotalRunHour = 160;
-  ucRealRunSegNum = 18;
-  IICaddr= RUNSTATE_SAVE_ADDRESS;//开始两位存储烤房号、上下棚和曲线号
-  IICdatt=((ucRealRunSegNum)&0x7f)+(RunStopState<<7);
-  IICdatt = IICdatt << 8;
-  IICdatt = IICdatt + (uiTotalRunHour&0xff);
-  WordTo24C();
-  _delay_ms(5);
-*/
+  FenmenActLeSS1Flag = 0;
+  FenmenActLeSS1RunFlag = 0;
+  FenmenActMore1dot5Flag = 0;
+  FenmenActMore1dot5RunFlag = 0;
+
+  /*
+     uiTotalRunHour = 160;
+     ucRealRunSegNum = 18;
+     IICaddr= RUNSTATE_SAVE_ADDRESS;//开始两位存储烤房号、上下棚和曲线号
+     IICdatt=((ucRealRunSegNum)&0x7f)+(RunStopState<<7);
+     IICdatt = IICdatt << 8;
+     IICdatt = IICdatt + (uiTotalRunHour&0xff);
+     WordTo24C();
+     _delay_ms(5);
+   */
   //判断是否是上电复位
   for(j=0; j<5; j++)
   {
@@ -572,7 +598,7 @@ int main(void)
 		if(FlagPowerStatusCnt > 5 )
 		   FlagPowerStatus = 1;
 		else if(FlagPowerStatusCnt<3)
-		   FlagPowerStatus = 0;
+		   FlagPowerStatus = 1;//FlagPowerStatus = 0;
 
 
         PassFlag1 = 0;
@@ -625,7 +651,6 @@ int main(void)
 		flgFanOnPre     = 0x00;
 		flgXunOn        = 0x00;
         flgXunHuanGaoDi = 0x00;
-		flgXunHuanGaoDiCnt=0;
 		flgWindRun      = 0x00;
 		flgPianWen      = 0x00;
 
@@ -842,15 +867,17 @@ int main(void)
 	sx1276_7_8_LoRaEntryRx();
 	_delay_ms(500);
 	
+	vdGetFengmenCtrModStart = 1;//刚启动时不做判断，初始化结束后开始，不然会死机
 	
   while(1)
   {
       if((1 == u8Sx1278SendFlag)&&(TRUE!=flgRdTmp))
 	  {
-			 rep.Serial = u16MasterAddress;
-			 rep.Ftype = 0x01;
-			 rep.Room = (u16SlaveAddress & 0x1F)|(RunStopState<<7)|(ucCurveNum<<5);
-			 if(1 == flgFengjiNoCur)
+			rep.Serial = (u8)(u16MasterAddress & 0xff);
+			rep.Ftype = (u8)(0x01|((u16MasterAddress >>4) & 0xf0));
+			rep.Room = (u16SlaveAddress & 0x1F)|(RunStopState<<7)|(ucCurveNum<<5);
+			
+			if(1 == flgFengjiNoCur)
 			 	u16Sx1278FrameTemp = 0;
 			 else
 			 	u16Sx1278FrameTemp = 0x4000;
@@ -904,6 +931,7 @@ int main(void)
 			 //发送Frame_Rep_S rep 的值
 			 SendRF1278((u8 *)Frame_send_report,16);
 		     u8Sx1278SendFlag = 0;
+
     }
 	  if(flgKeyOk ==TRUE)            //按键处理
 	  {
@@ -916,6 +944,7 @@ int main(void)
 			vdKeyProc(ucKeyVal);
 			ucKeyVal = KEY_NULL;
 			flgKeyOk = FALSE;
+
     }	    
 	  if(flgRdDandT == TRUE)   //读取日期和时钟
 	  {
@@ -1064,7 +1093,7 @@ int main(void)
 		else if(FlagPowerStatusCnt<2)
 		{     
 		      FlagPowerStatusPre = FlagPowerStatus;
-		      FlagPowerStatus = 0;
+		      FlagPowerStatus = 1;//FlagPowerStatus = 0;
 		 }
 		 flgRdTmp = FALSE;
 	}
@@ -1124,13 +1153,13 @@ int main(void)
 		else if(0 == FlagPowerStatus)
 		{
              uiAcVolVal = 0;
-			 CLR_RUNLED;        //DTS201209081420,从市电变为电池的时候，RUNLED不亮
+			 //CLR_RUNLED;        //DTS201209081420,从市电变为电池的时候，RUNLED不亮，20200507这里取消掉，变电池的时候不灭LED灯
 		}
 		if((1 == FlagPowerStatus)&&(1== flgSysCtrFlag))
 		{   
 		    if(1 == flgSysCtrCnt)
 			{
-			   vdGetFengmenCtrModFlag();
+			   //vdGetFengmenCtrModFlag();//改在中断调用
 			   flgSysCtrCnt = 0;
 		    }
 			else
@@ -1144,10 +1173,9 @@ int main(void)
 		{
 			vdGetXunHuanGaodiFlag();
         }
-		if(1 == FlagPowerStatus)
-		{    
+		  //直接执行，去掉了FlagPowerStatus的判断条件
+		//if(1 == FlagPowerStatus)  
 			vdDaFengJiCntl();
-		}
 		
 		switch(enWorkMode)
 		{
@@ -1222,6 +1250,11 @@ int main(void)
         if(flgMinCnt)    //分钟时间到
 				{
 				   flgMinCnt    = 0x00;
+				   if(ucMinCnt % 5 ==0x00) 
+                   {
+					   FenmenActLeSS1Flag  = 0;
+					   FenmenActMore1dot5Flag = 0;
+				   }
 				   if(ucMinCnt % 30 ==0x00)   //每半个小时更新目标数据
 		                vdRenewTarDat();
 				   if(FengjiProtFlag == 1)
@@ -1406,15 +1439,15 @@ int main(void)
 						vdCalWetRate();
 					}
 			}
-            if(1 == FlagPowerStatus)//&&(FengMenGufengCtr>=120))
-			{
+ //           if(1 == FlagPowerStatus)//&&(FengMenGufengCtr>=120))
+//			{
 			      vdGuoFengJiCntl();
 				  if(flgFanOnPre!=flgFanOn)
 				  {
 				  		FengMenGufengCtr = 0;
 						flgFanOnPre = flgFanOn;
 				  }
-            }
+ //           }
             if(1 == FlagPowerStatus)//&&(FengMenGufengCtr1>=120))
 			{
 			       vdFengMenCntl();
@@ -1663,12 +1696,53 @@ void vdGuoFengJiCntl(void)
 ***********************************************************/
 void vdFengMenCntl(void)
 { 
-
-if((WetTempValCtr>5)&&(WetTempValCtr<800)&&(flgWindRun==0))
-{
-	if(WetTempValCtrT>=WetTempValCtr)
+ if((WetTempValCtr>5)&&(WetTempValCtr<800)&&(flgWindRun==0))
+ {
+	if(WetTempValCtrT>=(WetTempValCtr+10))
 	{
-     if(FengmenAngleN==900)
+    	if(FengmenAngleN==900)
+		{ 
+			WIND_CLOS;
+			flgWindRun = 0x01; //标志风门电机正在运转
+			uiWindCnt  = 550;//FengmenAngleN-300;  
+			uiFmNonCnt = 0;
+			FengmenAngleN =0;
+		}
+	    else if(FengmenAngleN==600)
+		{ 
+			WIND_CLOS;
+			flgWindRun = 0x01; //标志风门电机正在运转
+			uiWindCnt  = 450;//FengmenAngleN-300;  
+			uiFmNonCnt = 0;
+			FengmenAngleN =0;
+		}
+		else if(FengmenAngleN==300)
+		{
+			WIND_CLOS;
+			flgWindRun = 0x01; //标志风门电机正在运转
+			uiWindCnt  = 350;//FengmenAngleN-300;  
+			uiFmNonCnt = 0;
+			FengmenAngleN =0;
+		}
+		else
+		{
+		    if((uiWindCnt <2)&&(0 == FenmenActLeSS1Flag))
+            {
+			    WIND_CLOS;
+			    flgWindRun = 0x01; //标志风门电机正在运转
+			    uiWindCnt  = 550;  //FengmenAngleN-300;  
+			    uiFmNonCnt = 0;
+			    FengmenAngleN =0;
+			    FenmenActLeSS1Flag = 1;    //低于1度标志执行一次
+			    FenmenActLeSS1RunFlag = 1;//低于1度标志运行正在进行
+		    }
+		}
+	}
+	else if(WetTempValCtrT>=WetTempValCtr)
+	{
+		FenmenActMore1dot5Flag = 0;
+	    FenmenActLeSS1Flag = 0;
+        if(FengmenAngleN==900)
 		{ 
 			WIND_CLOS;
 			flgWindRun = 0x01; //标志风门电机正在运转
@@ -1699,130 +1773,175 @@ if((WetTempValCtr>5)&&(WetTempValCtr<800)&&(flgWindRun==0))
 	}
 	else
 	{
-	if((WetTempValCtr-WetTempValCtrT>0)&&(WetTempValCtr-WetTempValCtrT<5))
-	{
-		if(FengmenAngleN==900)
-		{ 
-			WIND_CLOS;
-			flgWindRun = 0x01; //标志风门电机正在运转
-			uiWindCnt  = 110;//FengmenAngleN-300;  
-			uiFmNonCnt = 0;
-			FengmenAngleN =300;
-		}
-		if(FengmenAngleN==600)
-		{ 
-			WIND_CLOS;
-			flgWindRun = 0x01; //标志风门电机正在运转
-			uiWindCnt  = 40;//FengmenAngleN-300;  
-			uiFmNonCnt = 0;
-			FengmenAngleN =300;
-		}
-		if(FengmenAngleN==300)
-		{
-			FengmenAngleN=FengmenAngleN;
-		}
-		if(FengmenAngleN==0) 
-		{
-  	        WIND_OPEN;
-			flgWindRun = 0x01; //标志风门电机正在运转
-			uiWindCnt  = 120;//300-FengmenAngleN;  
-			uiFmNonCnt = 0;
-			FengmenAngleN = 300;
-		}
-	}
-	else if((WetTempValCtr-WetTempValCtrT>=5)&&(WetTempValCtr-WetTempValCtrT<10))
-	{
-		if(FengmenAngleN==900)
-		  {  
-		       WIND_CLOS;
-			   flgWindRun = 0x01; //标志风门电机正在运转
-			   uiWindCnt  = 50;//FengmenAngleN-300;  
-			   uiFmNonCnt = 0;
-			   FengmenAngleN =600;
-		   }
-		  if(FengmenAngleN==600)
-		  { 
-               FengmenAngleN= 600;
-		  }
-		  if(FengmenAngleN==300)
-		  {
+        FenmenActLeSS1Flag = 0;
+        if((WetTempValCtr-WetTempValCtrT>0)&&(WetTempValCtr-WetTempValCtrT<5))
+        {
+             FenmenActMore1dot5Flag = 0;
+             if(FengmenAngleN==900)
+        	 { 
+        		WIND_CLOS;
+        		flgWindRun = 0x01; //标志风门电机正在运转
+        		uiWindCnt  = 300;//FengmenAngleN-300;  
+        		uiFmNonCnt = 0;
+        		FengmenAngleN =300;
+        	  }
+        	  if(FengmenAngleN==600)
+        	  { 
+        		 WIND_CLOS;
+        		 flgWindRun = 0x01; //标志风门电机正在运转
+        		 uiWindCnt  = 130;//FengmenAngleN-300;  
+        		 uiFmNonCnt = 0;
+        		 FengmenAngleN =300;
+        	  }
+        	  if(FengmenAngleN==300)
+        	  {
+        		 FengmenAngleN=FengmenAngleN;
+        	  }
+        	  if(FengmenAngleN==0) 
+        	  {
+          	     WIND_OPEN;
+        		 flgWindRun = 0x01; //标志风门电机正在运转
+        		 uiWindCnt  = 230;//300-FengmenAngleN;  
+        		 uiFmNonCnt = 0;
+        		 FengmenAngleN = 300;
+        	  }
+       }
+       else if((WetTempValCtr-WetTempValCtrT>=5)&&(WetTempValCtr-WetTempValCtrT<10))
+       {
+		   FenmenActMore1dot5Flag = 0;
+       		if(FengmenAngleN==900)
+       		{  
+       		    WIND_CLOS;
+       		    flgWindRun = 0x01; //标志风门电机正在运转
+       			uiWindCnt  = 240;//FengmenAngleN-300;  
+       			uiFmNonCnt = 0;
+       			FengmenAngleN =600;
+       	   }
+       	   if(FengmenAngleN==600)
+       	   { 
+                FengmenAngleN= 600;
+           }
+           if(FengmenAngleN==300)
+           {
+        	   WIND_OPEN;
+               flgWindRun = 0x01; //标志风门电机正在运转
+        	   uiWindCnt  = 150;//300-FengmenAngleN;  
+        	   uiFmNonCnt = 0;
+        	   FengmenAngleN = 600;	
+           }
+           if(FengmenAngleN==0)
+           {
+        	   WIND_OPEN;
+        	   flgWindRun = 0x01; //标志风门电机正在运转
+        	   uiWindCnt  = 360;//300-FengmenAngleN;  
+        	   uiFmNonCnt = 0;
+        	   FengmenAngleN = 600;	
+        	}
+        }
+        else if((WetTempValCtr-WetTempValCtrT>=10)&&(WetTempValCtr-WetTempValCtrT<15))
+        {
+            if(FengmenAngleN==900)
+            	FengmenAngleN = 900;
+        	if(FengmenAngleN==600)
+        	{ 
+                WIND_OPEN;
+        		flgWindRun = 0x01; //标志风门电机正在运转
+        		uiWindCnt  = 250;//300-FengmenAngleN;  
+        		uiFmNonCnt = 0;
+                FengmenAngleN= 900;
+        	}
+        	if(FengmenAngleN==300)
+        	{
+        		WIND_OPEN;
+        		flgWindRun = 0x01; //标志风门电机正在运转
+        		uiWindCnt  = 400;//300-FengmenAngleN;  
+        		uiFmNonCnt = 0;
+        		FengmenAngleN = 900;	
+        	}
+        	if(FengmenAngleN==0)
+        	{
+        		WIND_OPEN;
+        		flgWindRun = 0x01; //标志风门电机正在运转
+        		uiWindCnt  = 550;//300-FengmenAngleN;  
+        		uiFmNonCnt = 0;
+        		FengmenAngleN = 900;
+        	}
+       }
+	   else if((WetTempValCtr-WetTempValCtrT)>=15)
+       {
+	        if(FengmenAngleN==600)
+       		{ 
+       			 FengmenAngleN=900;
+       	         WIND_OPEN;
+       			 flgWindRun = 0x01; //标志风门电机正在运转
+       			 uiWindCnt  = 350;//1200-FengmenAngleN;  
+       			 uiFmNonCnt = 0;
+       		}
+       		else if(FengmenAngleN==300)
+       		{
+       			FengmenAngleN=900;
+       		    WIND_OPEN;
+       			flgWindRun = 0x01; //标志风门电机正在运转
+       		    uiWindCnt  = 450;//1200-FengmenAngleN;  
+       			uiFmNonCnt = 0;
+       		}
+       		else if(FengmenAngleN ==0)
+       		{
+       			FengmenAngleN=900;
+       		    WIND_OPEN;
+       			flgWindRun = 0x01; //标志风门电机正在运转
+       			uiWindCnt  = 550;//1200-FengmenAngleN;  
+       			uiFmNonCnt = 0;
+       		}
+       		else
+       		{
+			    FengmenAngleN = 900;
+		       if((uiWindCnt <2)&&(0 == FenmenActMore1dot5Flag))
+		       {
 			   WIND_OPEN;
 			   flgWindRun = 0x01; //标志风门电机正在运转
-			   uiWindCnt  = 70;//300-FengmenAngleN;  
+			   uiWindCnt  = 550;  //FengmenAngleN-300;	
 			   uiFmNonCnt = 0;
-			   FengmenAngleN = 600;	
-		  }
-		  if(FengmenAngleN==0)
-		  {
-			   WIND_OPEN;
-			   flgWindRun = 0x01; //标志风门电机正在运转
-			   uiWindCnt  = 180;//300-FengmenAngleN;  
-			   uiFmNonCnt = 0;
-			   FengmenAngleN = 600;	
-		  }
-	}
-	else if((WetTempValCtr-WetTempValCtrT>=10)&&(WetTempValCtr-WetTempValCtrT<15))
-  {
-        if(FengmenAngleN==900)
-			FengmenAngleN = 900;
-		if(FengmenAngleN==600)
-		{ 
-     	    WIND_OPEN;
-			flgWindRun = 0x01; //标志风门电机正在运转
-			uiWindCnt  = 350;//300-FengmenAngleN;  
-			uiFmNonCnt = 0;
-            FengmenAngleN= 900;
-		}
-		if(FengmenAngleN==300)
-		{
-			WIND_OPEN;
-			flgWindRun = 0x01; //标志风门电机正在运转
-			uiWindCnt  = 450;//300-FengmenAngleN;  
-			uiFmNonCnt = 0;
-			FengmenAngleN = 900;	
-		}
-		if(FengmenAngleN==0)
-		{
-			WIND_OPEN;
-			flgWindRun = 0x01; //标志风门电机正在运转
-			uiWindCnt  = 550;//300-FengmenAngleN;  
-			uiFmNonCnt = 0;
-			FengmenAngleN = 900;
-		}
-	}
-	else
-	{
-        if(FengmenAngleN==600)
-		{ 
-			 FengmenAngleN=900;
-	         WIND_OPEN;
-			 flgWindRun = 0x01; //标志风门电机正在运转
-			 uiWindCnt  = 350;//1200-FengmenAngleN;  
-			 uiFmNonCnt = 0;
-		}
-		else if(FengmenAngleN==300)
-		{
-			FengmenAngleN=900;
-		    WIND_OPEN;
-			flgWindRun = 0x01; //标志风门电机正在运转
-		    uiWindCnt  = 450;//1200-FengmenAngleN;  
-			uiFmNonCnt = 0;
-		}
-		else if(FengmenAngleN ==0)
-		{
-			FengmenAngleN=900;
-		    WIND_OPEN;
-			flgWindRun = 0x01; //标志风门电机正在运转
-			uiWindCnt  = 550;//1200-FengmenAngleN;  
-			uiFmNonCnt = 0;
-		}
-		else
-		{
-			FengmenAngleN=900;
-		}
-  }
-  }
-} 
+			   FengmenAngleN =900;
+			   FenmenActMore1dot5Flag = 1;	  //低于1度标志执行一次
+			   FenmenActMore1dot5RunFlag = 1;//低于1度标志运行正在进行
+		       }
+       		}
+   
+       }
+       else
+       {
+            if(FengmenAngleN==600)
+       		{ 
+       			 FengmenAngleN=900;
+       	         WIND_OPEN;
+       			 flgWindRun = 0x01; //标志风门电机正在运转
+       			 uiWindCnt  = 350;//1200-FengmenAngleN;  
+       			 uiFmNonCnt = 0;
+       		}
+       		else if(FengmenAngleN==300)
+       		{
+       			FengmenAngleN=900;
+       		    WIND_OPEN;
+       			flgWindRun = 0x01; //标志风门电机正在运转
+       		    uiWindCnt  = 450;//1200-FengmenAngleN;  
+       			uiFmNonCnt = 0;
+       		}
+       		else if(FengmenAngleN ==0)
+       		{
+       			FengmenAngleN=900;
+       		    WIND_OPEN;
+       			flgWindRun = 0x01; //标志风门电机正在运转
+       			uiWindCnt  = 550;//1200-FengmenAngleN;  
+       			uiFmNonCnt = 0;
+       		}
+       		else
+       		{
+       			FengmenAngleN=900;
+       		}
+      }
+     }
+   } 
 }
 
 /**********************************************************
@@ -3617,9 +3736,20 @@ void vdFillDispBuff(void)
 	uiDispBuff[2] = uiTargetDryTemp/10;        //目标干温
 
 	uiDispBuff[3] = uiTargetWetTemp/10;        //目标湿温;
+	
 
 	WetTempValCtrT= uiDispBuff[3];
 	Temp = 0;
+	
+		//用于测试风门手自动切换显示`
+//		uiDispBuff[0] = flgFengjiLackPh;
+		//uiDispBuff[3] = FengmenAngleN;//ACV_SAMP_FengmenCur;
+		//uiDispBuff[2] = ACV_SAMP_FengmenCur;
+	//	uiDispBuff[1] = ucFengjiLackPhCnt;
+	//		uiDispBuff[2] = flgXunHuanGaoDiPreDelay;
+	//uiDispBuff[3] = flgFengjiNoCur;
+	
+	
 	for(i=0; i<ucCurvRunSegNum;i++)					  
 	{
 	  Temp = Temp + (WorkSeg[i].ucSetRisTim + WorkSeg[i].ucSetStaTim); 
@@ -3653,6 +3783,7 @@ void vdFillDispBuff(void)
 	{
 	    uiDispBuff[0] = u16MasterAddressSet;
 		uiDispBuff[1] = u16SlaveAddressSet*10;
+		uiDispBuff[3] = 629;
 	}
 	if(enWorkMode == DEBUG_SlaveAddressSet)
 	{
@@ -4406,7 +4537,7 @@ void vdCurProc(void)
 
 	if(flgXunHuanGaoDiPreDelay<3)
     {
-	    if(((uiAcCurVal_A <11)&&(uiAcCurVal_C >=100))||((uiAcCurVal_A>=100)&&(uiAcCurVal_C <11))||((uiAcCurVal_A>=100)&&(uiAcCurVal_B <11))||((uiAcCurVal_B>=100)&&(uiAcCurVal_A <11))||(uiAcCurVal_A>(uiAcCurVal_C+ucProtCurValErr))||(uiAcCurVal_C>(uiAcCurVal_A+ucProtCurValErr))||(uiAcCurVal_A>(uiAcCurVal_B+ucProtCurValErr+25))||(uiAcCurVal_B>(uiAcCurVal_A+ucProtCurValErr+25))) 
+	    if(((uiAcCurVal_A <11)&&(uiAcCurVal_C >=uiAcCurVal_Overload))||((uiAcCurVal_A>=uiAcCurVal_Overload)&&(uiAcCurVal_C <11))||((uiAcCurVal_A>=uiAcCurVal_Overload)&&(uiAcCurVal_B <11))||((uiAcCurVal_B>=uiAcCurVal_Overload)&&(uiAcCurVal_A <11))||(uiAcCurVal_A>(uiAcCurVal_C+ucProtCurValErr))||(uiAcCurVal_C>(uiAcCurVal_A+ucProtCurValErr))||(uiAcCurVal_A>(uiAcCurVal_B+ucProtCurValErr+25))||(uiAcCurVal_B>(uiAcCurVal_A+ucProtCurValErr+25))) 
 		{
 			 if((!flgFengjiLackPh)&&(1 == u16CurrUpdateFlag)&&(ucFengjiLackPhCnt<3))
 		     {  
@@ -4537,7 +4668,44 @@ void vdWetAlarm(void)
 		flgWetLow = 0;
 	}
 }
+
 void vdGetXunHuanGaodiFlag(void)
+{
+	
+			if((flgFengjiNoCur==0x01)||(enWorkMode  == STOP_MODE))
+		{
+			flgXunHuanGaoDi=0x00;
+			flgXunHuanGaoDiPreDelay = 10;
+		}
+		if((uiAcCurVal_A<30)&&(uiAcCurVal_B<30)&&(uiAcCurVal_C<30))
+		{
+			flgXunHuanGaoDi=0x00;
+			flgXunHuanGaoDiPreDelay = 10;
+
+		}
+		else if(((uiAcCurVal_A<uiAcCurVal_Gaodi)&&(uiAcCurVal_B<uiAcCurVal_Gaodi))||((uiAcCurVal_A<uiAcCurVal_Gaodi)&&(uiAcCurVal_C<uiAcCurVal_Gaodi))||((uiAcCurVal_C<uiAcCurVal_Gaodi)&&(uiAcCurVal_B<uiAcCurVal_Gaodi)))
+		{
+			flgXunHuanGaoDi = 0x01;
+			if(((flgXunHuanGaoDiPre== 0x00)||(flgXunHuanGaoDiPre== 0x02))&&(!flgFengjiNoCur))
+			{
+				flgXunHuanGaoDiPreDelay = 30;
+			}
+		}
+		else if((uiAcCurVal_A>uiAcCurVal_Gaodi)&&(uiAcCurVal_B>uiAcCurVal_Gaodi)&&(uiAcCurVal_C>uiAcCurVal_Gaodi))
+		{
+				flgXunHuanGaoDi = 0x02;
+				if(((flgXunHuanGaoDiPre== 0x00)||(flgXunHuanGaoDiPre== 0x01))&&(!flgFengjiNoCur))
+				{
+						flgXunHuanGaoDiPreDelay = 30;
+				}
+		}
+
+
+     flgXunHuanGaoDiPre = flgXunHuanGaoDi; 
+
+}
+
+/*void vdGetXunHuanGaodiFlag(void)
 {
 	    if(flgXunHuanGaoDiCntPre>=4)
 	    {
@@ -4579,7 +4747,30 @@ void vdGetFengmenCtrModFlag(void)
 			  FengmenAngleN =0;
 	  }
  	  FengmenCtrModPre = FengmenCtrMod;
+}*/
+
+unsigned int FengmenOverLoadCnt = 0;
+void vdGetFengmenCtrModFlag(void)//本函数0.5s调用一次
+{
+	if((1 == FenmenActMore1dot5RunFlag)||(1 == FenmenActLeSS1RunFlag))
+	{
+		ACV_SAMP_FengmenCur = uiGaugeDCC(ACV_SAMP_FengmenOverload);
+		if(ACV_SAMP_FengmenCur>150)
+		{	
+		    FengmenOverLoadCnt++;
+            if(FengmenOverLoadCnt >=2)
+            {
+               uiWindCnt = 2;
+			   FengmenOverLoadCnt = 2;
+			}
+		}
+	}
+	else
+	{
+		 FengmenOverLoadCnt = 0;
+	}
 }
+
 void vdSampCoalMotorOverload(void)
 {
 

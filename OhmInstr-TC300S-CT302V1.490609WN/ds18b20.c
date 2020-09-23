@@ -3,37 +3,67 @@
 
 u8 ucStartSuccFlg;
 
+u8 u8DS18B20lowFlag = 0;
+u8 u8DS18B20lowErrCnt_0 = 0;
+u8 u8DS18B20lowErrCnt_1 = 0;
+u8 u8DS18B20lowErrCnt_2 = 0;
+u8 u8DS18B20lowErrCnt_3 = 0;
+
+void DS18B20_IO_IN(u16 DS18B20_Pin)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;        //??GPIO??????
+	GPIO_InitStructure.GPIO_Pin = DS18B20_Pin; 		
+  	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;  //???????; 
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+}
+
+void DS18B20_IO_OUT(u16 DS18B20_Pin)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;        //??GPIO??????
+	GPIO_InitStructure.GPIO_Pin = DS18B20_Pin; 		
+  	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;  //???????; 
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+}
 //ds18b20初始化
 u8 ucInitB20(u8 ch_num)  //ch_num value: 0,1,2,3
 { 
-	u8 ch,i,j;
+	u8 ch,i,j,k;
 	u16 ch_bit;
 
 	ch_bit = ((u16)(0x01))<<(ch_num);
 
 	i=10;
+	k = 0;
 	while(i-->0)
    {	
+ 		DS18B20_IO_OUT(ch_bit);
     	GPIO_ResetBits(GPIOB,ch_bit);		//置低			  
         _delay_us(520);						//延时520us
     	
     	GPIO_SetBits(GPIOB,ch_bit);			//置高
 		_delay_us(60);						//延时32
 		
+		DS18B20_IO_IN(ch_bit);
 		j=255;
     	while(j-->0)	// 255us的超时计数
     	{
-    		_delay_us(1);	// 每us查询一次
-    		ch = GPIO_ReadInputDataBit(GPIOB,ch_bit);//等待传感器响应
-    		if(ch == 0)//正常
-    		{
-    	    while((GPIO_ReadInputDataBit(GPIOB,ch_bit)==0)&&(j<300));//等待传感器响应
-            {
-    	         _delay_us(1);//等待传感器响应
-    	         j++;
-    	    }
-    		_delay_us(280);						//再延时280us
-    		return (0xFF);
+        		_delay_us(1);	// 每us查询一次
+        		ch = GPIO_ReadInputDataBit(GPIOB,ch_bit);//等待传感器响应
+        		if(ch == 0)//正常
+        		{
+        	    while((GPIO_ReadInputDataBit(GPIOB,ch_bit)==0)&&(k<254))//等待传感器响应
+                {
+        	         _delay_us(1);//等待传感器响应
+        	         k++;
+        	    }
+        		_delay_us(280);						//再延时280us
+                if(k>=254)
+					u8DS18B20lowFlag = 1;
+				else
+					u8DS18B20lowFlag = 0;
+				return (0xFF);
     		}
     	}
     }	
@@ -47,8 +77,9 @@ void vdWrB20(u8 ch_num, u8 ucData)
 	u16 ch_bit;
 
 	ch_bit = ((u16)(0x01))<<(ch_num);
- 
-    for(i=0; i<8; i++) 
+	
+	DS18B20_IO_OUT(ch_bit);
+      for(i=0; i<8; i++) 
     {
     	GPIO_ResetBits(GPIOB,ch_bit);		//置低
     	_delay_us(8);						//延时5us  
@@ -80,29 +111,39 @@ u8 ucRdB20(u8 ch_num)
 
     for(i=0; i<8; i++) 
     {
+		DS18B20_IO_OUT(ch_bit);
 		temp >>= 1; 
-//		_delay_us(1);                               //1 us recovery
-		
 		GPIO_ResetBits(GPIOB,ch_bit);
-			 
+		
+
+		//电平置位0
 		_delay_us(3); 								// Delay 1us
 		GPIO_SetBits(GPIOB,ch_bit);		//置高
+
+
+		//电平置位1
 	    
 		_delay_us(3);                               // Delay 5us
-		j=10;k=0;
+		DS18B20_IO_IN(ch_bit);
+		j=7;k=0;
 		while(j-->0)
 		{
+		
+
 			ch = GPIO_ReadInputDataBit(GPIOB,ch_bit);
-			if(ch == 0)
+			//电平置位0
+        	if(ch == 1)
 			{
 				k++;
-				if(k >= 3)
+                if(k >= 2)
 				{
 					_delay_us(5);
 					break;
 				}
 			}
+
 			_delay_us(1);
+			//置位高
 		}
 	   								 
 		if(ch)
@@ -219,6 +260,20 @@ u8 ucStartRdTmp(unsigned int *ptmp)
 		}
 		val = tbuf0[0]-tbuf1[0];
 		if(val < 50 && val > -50)  *ptmp = tbuf1[0];
+		if(1 == u8DS18B20lowFlag)
+		{
+			u8DS18B20lowErrCnt_0++;
+		}
+		else
+		{
+			u8DS18B20lowErrCnt_0 = 0;
+		}
+		u8DS18B20lowFlag = 0;
+		if(u8DS18B20lowErrCnt_0 >= 5)
+		{    
+		     *ptmp = 0;
+		     u8DS18B20lowErrCnt_0 = 5;
+		}
     }
     
 	if((ucStartSuccFlg & 0x02) ==0x02)
@@ -234,7 +289,20 @@ u8 ucStartRdTmp(unsigned int *ptmp)
 		}
 		val = tbuf0[1]-tbuf1[1];
 		 if(val < 50 && val > -50)  *(ptmp+1) = tbuf1[1];
-
+		 if(1 == u8DS18B20lowFlag)
+		 {
+			 u8DS18B20lowErrCnt_1++;
+		 }
+		 else
+		 {
+			 u8DS18B20lowErrCnt_1 = 0;
+		 }
+		 u8DS18B20lowFlag = 0;
+		 if(u8DS18B20lowErrCnt_1 >= 5)
+		 {	  
+			  *(ptmp+1) = 0;
+			  u8DS18B20lowErrCnt_1 = 5;
+		 }
 	}
 
 	if((ucStartSuccFlg & 0x04) ==0x04)    //短线传感器，长线一般安装在烤房上棚
@@ -250,6 +318,21 @@ u8 ucStartRdTmp(unsigned int *ptmp)
 		}
 		val = tbuf0[2]-tbuf1[2];
 		 if(val < 50 && val > -50) *(ptmp+2) = tbuf1[2];
+		 
+		 if(1 == u8DS18B20lowFlag)
+		 {
+			 u8DS18B20lowErrCnt_2++;
+		 }
+		 else
+		 {
+			 u8DS18B20lowErrCnt_2 = 0;
+		 }
+		 u8DS18B20lowFlag = 0;
+		 if(u8DS18B20lowErrCnt_2 >= 5)
+		 {	  
+			  *(ptmp+2) = 0;
+			  u8DS18B20lowErrCnt_2 = 5;
+		 }
 	}
     
 	if((ucStartSuccFlg & 0x08) ==0x08)
@@ -265,6 +348,20 @@ u8 ucStartRdTmp(unsigned int *ptmp)
 		}
 		val = tbuf0[3]-tbuf1[3];
 		 if(val < 50 && val > -50) *(ptmp+3) = tbuf1[3];
+		 if(1 == u8DS18B20lowFlag)
+		 {
+			 u8DS18B20lowErrCnt_3++;
+		 }
+		 else
+		 {
+			 u8DS18B20lowErrCnt_3 = 0;
+		 }
+		 u8DS18B20lowFlag = 0;
+		 if(u8DS18B20lowErrCnt_3 >= 5)
+		 {	  
+			  *(ptmp+3) = 0;
+			  u8DS18B20lowErrCnt_3 = 5;
+		 }
 	}
 	
 	if(ucStartConvert(TEMP_SAMP_CH0) ==0xff)
@@ -290,7 +387,6 @@ u8 ucStartRdTmp(unsigned int *ptmp)
 	{
 	    for(i= 0; i< 4; i++)
 		    *(ptmp+i) = 0x00;
-		
 		return(0);
     }
 }

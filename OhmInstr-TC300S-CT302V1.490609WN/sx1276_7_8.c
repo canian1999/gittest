@@ -315,7 +315,7 @@ void sx1276_7_8_Config(void)
   sx1276_7_8_Standby();                                         //Entry standby mode
 }
 
-u8 SFBW[4][2] = {{4,9},{5,9},{4,8},{5,8}};
+u16 SFBW[4][2] = {{4,9},{5,9},{4,8},{5,8}};
 void Init1278(u8 Master)
 {
 	
@@ -341,11 +341,14 @@ void SendRF1278(u8* pBuf,u8 len)
 	sx1276_7_8_LoRaEntryRx();	
 }
 u8 rBuf[32] = {0};	
+
 u8 GetRFFrame_1278(void)
 {
   u8 addr,i;
   u8 temp;  
   u8 length;
+	u16 MasterAddresstest;
+	
     if(Get_NIRQ())  //GPIO_ReadInputPin(GPIOB, GPIO_PIN_4)!=RESET
     {
        	addr = SPIRead(LR_RegFifoRxCurrentaddr);         //last packet addr
@@ -355,7 +358,8 @@ u8 GetRFFrame_1278(void)
        	if(length >= 4)
        	{
        		SPIBurstRead(0x00,rBuf, length);
-			    if((u16MasterAddress != rBuf[0])||(u16SlaveAddress !=rBuf[2]))
+					MasterAddresstest = (u16)(rBuf[0])|(u16)((rBuf[1] & 0xf0)<<4);
+			    if((u16MasterAddress != MasterAddresstest)||(u16SlaveAddress !=rBuf[2]))
        			return 0;
        		for(i = 0;i<(length-1);i++)
        			temp += rBuf[i];
